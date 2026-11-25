@@ -72,7 +72,7 @@ A 5-acre wheat cycle:
 | Sale 2 | 600 kg @ 4,050 PKR/maund = 15 maund × 4,050 = **60,750** |
 | Revenue | **255,750** |
 | Profit | 255,750 − 84,500 = **171,250** |
-| Margin | 171,250 / 255,750 = **66.9 %** |
+| Margin | 171,250 / 255,750 = 66.956… → **67.0 %** (1 dp, ROUND_HALF_UP) |
 | Yield | 2,600 kg → 65 maund |
 | Break-even price | 84,500 / 65 = **1,300.00 PKR/maund** |
 | Yield per acre | **520 kg** |
