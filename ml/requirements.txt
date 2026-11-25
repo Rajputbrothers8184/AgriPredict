@@ -1,0 +1,30 @@
+# ---------------------------------------------------------------------------
+# AgriPredict ML service — core dependencies
+#
+# Python 3.11 recommended (3.10+ works).
+#
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# This file deliberately EXCLUDES PyTorch and Chronos: they add ~1 GB of wheels
+# plus ~500 MB of model weights, and the Seasonal Naive and XGBoost baselines are
+# fully functional without them. Install the foundation-model extras only if you
+# want to run Chronos:
+#
+#   pip install -r requirements-chronos.txt
+# ---------------------------------------------------------------------------
+
+pandas==2.2.3
+numpy==2.1.3
+scikit-learn==1.6.0
+xgboost==2.1.3
+
+# Inference micro-service
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+httpx==0.28.1
+
+# Persistence of trained artefacts (joblib), metadata, and the parquet dataset
+joblib==1.4.2
+pyarrow==18.1.0

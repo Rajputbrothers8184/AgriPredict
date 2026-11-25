@@ -7,21 +7,22 @@ from collections.abc import Generator
 from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
-from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import REPO_ROOT, settings
+from app.core.config import settings
 from app.models import Base
 
 logger = logging.getLogger(__name__)
 
 
 def _resolve_sqlite_path(url: str) -> str:
-    """Make a relative SQLite path absolute against the repository root.
+    """Make a relative SQLite path absolute against the **current directory**.
 
-    Without this, the database file's location depends on the shell's current
-    directory, which produces the classic "my data disappeared" bug when the
-    server is started from a different folder.
+    ``sqlite:///./agripredict.db`` conventionally means "next to where I ran the
+    command", so that is the anchor. (An earlier version anchored at the
+    repository root, which silently opened a *different* file when the server and
+    the seeder were started from different folders.) The absolute path is logged
+    at startup, so the resolved location is never a guess.
     """
     prefix = "sqlite:///"
     if not url.startswith(prefix):
@@ -31,7 +32,7 @@ def _resolve_sqlite_path(url: str) -> str:
         return url
     path = Path(raw)
     if not path.is_absolute():
-        path = (REPO_ROOT / path).resolve()
+        path = (Path.cwd() / path).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
     return f"{prefix}{path}"
 
@@ -90,7 +91,5 @@ def init_db(target_engine: Engine | None = None) -> None:
     Alembic (``backend/alembic``) so that upgrades are reviewable.
     """
     eng = target_engine or engine
-    if eng.dialect.name == "sqlite":
-        _ = URL  # imported for type clarity in some deployments
     Base.metadata.create_all(bind=eng)
     logger.info("database schema ensured on %s", eng.url.render_as_string(hide_password=True))
