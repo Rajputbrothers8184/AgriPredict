@@ -1,0 +1,48 @@
+# Normalise line endings so the repository behaves identically on Windows,
+# Linux and macOS.
+* text=auto eol=lf
+
+# Explicit text types
+*.py        text diff=python
+*.js        text
+*.jsx       text
+*.json      text
+*.md        text
+*.yml       text
+*.yaml      text
+*.sql       text
+*.sh        text eol=lf
+*.bat       text eol=crlf
+*.ps1       text eol=crlf
+
+# Gradle wrapper must keep LF
+gradlew     text eol=lf
+*.gradle    text eol=lf
+
+# Binary types — never diff, never convert
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.ttf       binary
+*.otf       binary
+*.woff      binary
+*.woff2     binary
+*.pdf       binary
+*.zip       binary
+*.apk       binary
+*.aab       binary
+*.db        binary
+*.sqlite    binary
+*.pt        binary
+*.pth       binary
+*.onnx      binary
+*.joblib    binary
+*.pkl       binary
+
+# Keep generated/vendored code out of review diffs and language stats
+package-lock.json linguist-generated=true
+LICENSE     linguist-documentation
+docs/**     linguist-documentation
