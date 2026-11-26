@@ -17,7 +17,7 @@ Last updated: 2026-11-26
 | 3 | Backend development (FastAPI, auth, APIs, tests) | **done** | `8298483`; 125 API tests pass |
 | 4 | Machine learning (data, preprocessing, 3 models, evaluation) | **done** | `28a8a68`; 85 ML tests pass; live service drove real forecasts |
 | 5 | Frontend (React Native screens, i18n, theming, exports) | **done with limitations** | 160 Jest tests, Metro release bundle, 11 live API tests. **No APK** — no Android SDK here |
-| 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | in progress | frontend↔backend and backend↔ML proven live; external APIs (weather/Places/Chronos) unavailable |
+| 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | **done with limitations** | `scripts/e2e_scenario.py`: 71/71 checks over real HTTP incl. backend→ML forecast and PDF/XLSX download; external APIs (weather/Places/Chronos) unavailable and reported honestly |
 | 7 | Final testing (unit, API, DB, ML, integration, security) | in progress | 415 automated tests total; security review still to do |
 | 8 | Release (docs, artifacts, tag `v1.0.0`) | not started | — |
 
@@ -30,7 +30,8 @@ Last updated: 2026-11-26
 | ML service | 85 | `cd ml && pytest tests -q` |
 | Frontend | 160 | `cd frontend && npx jest` |
 | Frontend live integration (opt-in) | 11 | `LIVE_API=1 npx jest tests/live.integration.test.js` |
-| **Total** | **415 automated** + 11 live | |
+| **End-to-end acceptance** | **71 checks** | `python scripts/e2e_scenario.py` (needs a running stack) |
+| **Total** | **415 automated** + 11 live + 71 e2e | |
 
 ## Environment / capability matrix
 
@@ -107,9 +108,21 @@ Measured in the development sandbox on 2026-11-25:
    OpenAPI schema) now fails if a field the app reads disappears.
 7. **New architecture disabled** in `frontend/android/gradle.properties`. Reason
    and re-enable path are documented in `frontend/README.md`.
+8. **Sign-out does not instantly invalidate the access token.** `POST /auth/logout`
+   revokes only the refresh token, so a stolen access token keeps working for up
+   to 60 minutes. `logout-all` and `change-password` do invalidate immediately
+   (they bump `token_version`). This is the standard stateless-JWT trade-off; the
+   options and their cost are laid out in `docs/testing/e2e-scenario.md`. Left as
+   a documented decision for the owner rather than changed unilaterally.
+9. **The demo database needed price data.** Only one market had quotes, which
+   made the cross-market comparison screen useless. Added
+   `backend/scripts/seed_demo_prices.py`, which generates deterministic
+   `synthetic_fixture` rows for 10 commodities × 6 markets, refuses to mix them
+   into a database holding real prices, and is labelled in the UI.
 
 ## Next approved task
 
-Phase 6 — integration. Specifically: a single scripted end-to-end scenario
-(register → farm → cycle → expense → sale → forecast → PDF) that runs against
-the real stack, plus the remaining external-API paths documented as untested.
+Phase 7 — final testing. Remaining work: a security pass (auth/RBAC review,
+input-injection checks, dependency audit, secrets scan), a backend load smoke
+test, and a coverage report per layer. Phase 8 then needs the docs set
+(user guide, installation guide, architecture overview) and a tagged release.
