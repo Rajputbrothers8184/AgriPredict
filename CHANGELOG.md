@@ -72,7 +72,9 @@ rather than implied.
   `pydantic 2.14.4`, `pydantic-settings 2.14.2`, `sqlalchemy 2.0.44`,
   `uvicorn 0.38.0`. `pip-audit` now reports none.
 - `@react-native/metro-config` and the RN CLI moved from `dependencies` to
-  `devDependencies`. They are build-time tools and never ship in an APK.
+  `devDependencies`. They are build-time tools and never ship in an APK. This
+  does *not* remove the one remaining production advisory: React Native itself
+  depends on the CLI plugin at runtime. See `docs/security/review.md` finding 2.
 - Version is defined once per layer (`backend/app/__init__.py`,
   `frontend/src/config.js`) instead of being duplicated as a literal.
 - Demo price data now spans six markets per commodity. It previously covered one
@@ -123,6 +125,9 @@ Deliberate, documented and unchanged by this release:
 5. **Ordinary sign-out does not revoke the access token**, only the refresh
    token. `logout-all` and `change-password` do. See
    `docs/security/review.md`, finding 4.
+6. **One frontend advisory remains** (`image-size`, via Metro). It is build-time
+   only, absent from the release bundle, and cannot be patched without breaking
+   bundling. CI gates it explicitly instead of silently passing.
 6. **Rate limiting is per process.** A multi-worker deployment multiplies the
    effective limit; Redis is required before scaling out.
 7. **Android only.** There is no iOS target.

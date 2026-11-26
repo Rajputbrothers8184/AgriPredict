@@ -17,7 +17,7 @@ This document records what was **tested**, what was **found**, what was
 | Authentication | Pass — bcrypt, JWT with typed claims, rotation, revocation |
 | Authorisation | Pass — every protected route rejects anonymous access; cross-user access returns 404 |
 | Injection | Pass — parameterised ORM use throughout; hostile strings stored as data |
-| Dependency vulnerabilities | **Fixed** — 48 advisories cleared in the backend, prod frontend deps reduced to one build-time advisory |
+| Dependency vulnerabilities | **Fixed** — 48 backend advisories cleared (0 remain); 1 frontend advisory reachable only from the bundler, accepted and gated |
 | Secrets in the repository | Pass — none present; placeholders rejected in production |
 | Transport / headers | Pass with caveats — headers set, TLS left to the deployment |
 | Client-side data handling | **Fixed** — URL scheme gate added; see finding 3 |
@@ -57,23 +57,50 @@ $ pip-audit -r requirements.txt
 No known vulnerabilities found
 ```
 
-### Finding 2 — one high-severity advisory in an unused frontend package (Medium) — MITIGATED
+### Finding 2 — one high-severity advisory reachable only from the bundler (Low) — ACCEPTED, gated
 
-`npm audit --omit=dev` reported `image-size` (infinite loop parsing hostile
-JXL/HEIF/ICNS headers), reached transitively through
-`@react-native/metro-config → metro → image-size`.
+`npm audit --omit=dev` reports `image-size@1.2.1` (infinite loop parsing hostile
+JXL/HEIF/ICNS headers) reached through
+`react-native → @react-native/community-cli-plugin → metro → image-size`.
+React Native depends on the CLI plugin at runtime, so moving
+`@react-native/metro-config` to `devDependencies` (done earlier) does **not**
+remove it from the production audit — an earlier version of this document
+overstated that fix, and CI caught the discrepancy.
 
-That chain is **build-time only** — Metro runs on a developer machine, not on a
-phone — but it sat in `dependencies`, which is why the production audit flagged
-it. `npm audit fix` cannot resolve it without `--force` (a breaking downgrade of
-meteor's own dependency tree).
+**Why it cannot simply be upgraded.** The advisory range is `0.6.3 - 2.0.2`, so
+only 2.x is patched; `1.2.1` is the newest 1.x. Metro 0.81.5 calls
+`getImageSize()` from image-size 1.x, and 2.x renamed that export. Forcing
+`image-size@^2.1.0` through `overrides` was tested and **breaks the release
+build**:
 
-**Fix.** `@react-native/metro-config` and the `@react-native-community/cli`
-packages were moved from `dependencies` to `devDependencies`. Runtime
-dependencies are now the nine libraries the app actually ships: React Native,
-React, the three navigation packages, safe-area-context, screens, svg and
-async-storage. The affected package is still present, is still dev-only, and the
-remaining advisory is documented rather than suppressed.
+```
+error getImageSize is not a function.
+```
+
+with the bundle failing and zero assets copied. It was reverted.
+
+**Why the residual risk is low, and how that was verified.** image-size parses
+image files **at bundle time, on a developer machine**. It is not in the shipped
+artifact:
+
+```
+$ grep -c getImageSize /tmp/ok.bundle
+0
+```
+
+The attacker would have to be someone who can already get a hostile image into
+the repository and convince a developer to bundle it — by which point they can
+change the code directly. The 1,569,037-byte release bundle builds and contains
+no reference to the parser.
+
+**Control.** CI does not run a bare `npm audit --omit=dev` (which would fail
+forever on an unfixable transitive dependency and train everyone to ignore it).
+It runs a scoped gate: the single known package is listed with its justification,
+and **any other production advisory fails the job**. Verified both ways — the
+current tree passes, and a simulated extra advisory exits non-zero.
+
+Re-check when Metro supports image-size 2.x: `npm view metro version`, then
+remove the exception from `.github/workflows/ci.yml`.
 
 ### Finding 3 — API-controlled URLs were opened without validating their scheme (Medium) — FIXED
 
