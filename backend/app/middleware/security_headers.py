@@ -13,9 +13,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.config import settings
+
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
+    "X-Frame-Options": settings.frame_options,
     "Referrer-Policy": "no-referrer",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Permissions-Policy": "geolocation=(self), microphone=(), camera=()",
@@ -28,6 +30,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         for header, value in SECURITY_HEADERS.items():
             response.headers.setdefault(header, value)
+
+        # Modern browsers honour Content-Security-Policy frame-ancestors over
+        # X-Frame-Options, so the two are kept consistent. With DENY there is
+        # nothing to add: an absent frame-ancestors cannot contradict the header.
+        if settings.frame_options != "DENY" or settings.frame_ancestor_list:
+            sources = []
+            if settings.frame_options == "SAMEORIGIN":
+                sources.append("'self'")
+            sources.extend(settings.frame_ancestor_list)
+            if sources:
+                response.headers.setdefault(
+                    "Content-Security-Policy",
+                    f"frame-ancestors {' '.join(sources)};",
+                )
         return response
 
 

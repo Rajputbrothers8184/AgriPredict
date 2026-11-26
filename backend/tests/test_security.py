@@ -432,8 +432,35 @@ def test_rate_limit_reports_retry_after_so_clients_can_back_off(client: TestClie
 def test_security_headers_are_present_on_api_responses(client: TestClient):
     response = client.get("/health")
     assert response.headers["X-Content-Type-Options"] == "nosniff"
-    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Frame-Options"] == settings.frame_options
     assert response.headers["Referrer-Policy"] == "no-referrer"
+
+
+def test_a_relaxed_frame_policy_is_refused_in_production():
+    """Embedding is a sandbox concession; it must never reach production."""
+    from app.core.config import Settings
+
+    relaxed = Settings(
+        _env_file=None,
+        environment="production",
+        debug=False,
+        secret_key="a" * 48,
+        frame_options="SAMEORIGIN",
+    )
+    with pytest.raises(RuntimeError, match="FRAME_OPTIONS"):
+        relaxed.validate_runtime()
+
+
+def test_a_strict_frame_policy_is_accepted_in_production():
+    from app.core.config import Settings
+
+    strict = Settings(
+        _env_file=None,
+        environment="production",
+        debug=False,
+        secret_key="b" * 48,
+    )
+    strict.validate_runtime()  # must not raise
 
 
 def test_error_responses_do_not_leak_internals(client: TestClient, auth_headers: dict):
@@ -471,3 +498,48 @@ def test_user_payloads_never_include_the_password_hash(client: TestClient, auth_
 def _any_commodity_id(client: TestClient, headers: dict) -> int:
     commodities = client.get("/api/v1/markets/commodities", headers=headers).json()
     return commodities[0]["id"]
+
+
+# ---------------------------------------------------------------------------
+# CORS
+# ---------------------------------------------------------------------------
+def test_cors_preflight_allows_a_configured_origin(client: TestClient):
+    """The mobile/web client must be able to preflight a JSON POST."""
+    response = client.options(
+        "/api/v1/auth/login",
+        headers={
+            "Origin": "http://localhost:8081",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:8081"
+
+
+def test_cors_preflight_rejects_an_unknown_origin(client: TestClient):
+    response = client.options(
+        "/api/v1/auth/login",
+        headers={
+            "Origin": "https://evil.example.com",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    # 400 without an allow-origin header: the browser then blocks the response.
+    assert response.status_code == 400
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_cors_origins_is_never_a_bare_wildcard():
+    """A '*' in allow_origins would be a find-replace away from an open API.
+
+    Starlette matches `allow_origins` as literal strings, so a wildcard written
+    as "*" combined with `allow_credentials` is both wrong and dangerous; and a
+    pattern like "https://*.e2b.app" never matches at all, which fails the
+    preflight silently. Patterns belong in `cors_origin_regex`.
+    """
+    from app.core.config import Settings
+
+    settings = Settings(_env_file=None)
+    assert "*" not in settings.cors_origin_list
+    assert all("*" not in origin for origin in settings.cors_origin_list)

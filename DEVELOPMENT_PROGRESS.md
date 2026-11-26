@@ -27,11 +27,11 @@ Last updated: 2026-11-26
 | --- | --- | --- |
 | Database | 45 | `cd database && pytest tests -q` |
 | ML service | 85 | `cd ml && pytest tests -q` |
-| Backend (incl. 36 security) | **161** | `cd backend && pytest -q` |
+| Backend (incl. 39 security) | **167** | `cd backend && pytest -q` |
 | Frontend (incl. 13 security) | **173** | `cd frontend && npx jest` |
 | Frontend live integration (opt-in) | 11 | `LIVE_API=1 npx jest tests/live.integration.test.js` |
 | **End-to-end acceptance** | **71 checks** | `python scripts/e2e_scenario.py` (needs a running stack) |
-| **Total** | **464 automated** + 11 live + 71 e2e + load smoke | |
+| **Total** | **470 automated** + 11 live + 71 e2e + load smoke | |
 
 ## Environment / capability matrix
 

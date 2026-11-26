@@ -81,6 +81,17 @@ rather than implied.
 
 ### Fixed
 
+- **The API could not be embedded in a browser preview.** `X-Frame-Options: DENY`
+  was sent unconditionally, so any iframe-rendered preview showed a blank frame.
+  The policy is now configurable (`FRAME_OPTIONS`, `FRAME_ANCESTORS`) with the
+  secure default unchanged, a matching `frame-ancestors` CSP, and a production
+  boot check that refuses anything but `DENY`.
+- **A wildcard in `CORS_ORIGINS` silently failed every preflight.** Starlette
+  matches `allow_origins` as literal strings, so `https://*.example.com` never
+  matched and the preflight returned 400 with no `allow-origin` header. Added
+  `CORS_ORIGIN_REGEX` for patterns and tests for the exact-origin, regex and
+  refused-origin paths.
+
 - **URL scheme not validated before handing it to the OS.** The report download
   URL accepted any `http`-prefixed string, and externally-sourced buyer phone
   numbers were interpolated straight into `tel:`. Both now go through

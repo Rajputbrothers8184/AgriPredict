@@ -51,7 +51,23 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 30
     jwt_algorithm: str = "HS256"
+    # Exact origins, comma separated. CORSMiddleware compares these as literal
+    # strings: a wildcard here silently fails the preflight, which is why the
+    # regex below exists.
     cors_origins: str = "http://localhost:8081,http://localhost:19006"
+    # Optional regex for origins that cannot be enumerated (a hosted preview
+    # whose subdomain contains a random sandbox id). Empty by default; matched
+    # with re.fullmatch.
+    cors_origin_regex: str = ""
+    # X-Frame-Options policy. DENY is the correct default for an API that is
+    # consumed by a native app; a browser-based preview runs the API inside an
+    # iframe, which DENY blocks outright. Only a development sandbox should
+    # relax this, and `validate_runtime` refuses to boot in production if the
+    # policy is anything other than the strict default.
+    frame_options: str = "DENY"
+    # Extra origins allowed to frame the API (e.g. "https://*.e2b.app" for a
+    # hosted preview). Appended to frame_ancestors; empty by default.
+    frame_ancestors: str = ""
     auth_rate_limit_per_minute: int = 10
     # bcrypt work factor. 12 is appropriate for production; the test suite
     # lowers it to keep the build fast (see backend/tests/conftest.py).
@@ -114,6 +130,15 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
+    def cors_origin_regex_or_none(self) -> str | None:
+        pattern = self.cors_origin_regex.strip()
+        return pattern or None
+
+    @property
+    def frame_ancestor_list(self) -> list[str]:
+        return [item.strip() for item in self.frame_ancestors.split(",") if item.strip()]
+
+    @property
     def report_dir(self) -> Path:
         path = self.report_storage_dir
         if not path.is_absolute():
@@ -142,6 +167,13 @@ class Settings(BaseSettings):
             )
         if self.is_production and self.debug:
             raise RuntimeError("DEBUG must be false in production.")
+        if self.is_production and self.frame_options != "DENY":
+            # Framing protection is cheap and a relaxed policy in production is
+            # almost always a configuration that was copied from a sandbox.
+            raise RuntimeError(
+                "FRAME_OPTIONS must remain DENY in production. A relaxed policy "
+                "is only appropriate for a local preview."
+            )
 
 
 @lru_cache

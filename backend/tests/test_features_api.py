@@ -458,10 +458,20 @@ def test_openapi_document_is_valid(client: TestClient):
 
 
 def test_security_headers_are_present(client: TestClient):
+    from app.core.config import settings
+
     response = client.get("/health")
     assert response.headers["X-Content-Type-Options"] == "nosniff"
-    assert response.headers["X-Frame-Options"] == "DENY"
+    # The strict policy is the shipped default; a preview sandbox may relax it.
+    assert response.headers["X-Frame-Options"] == settings.frame_options
     assert "X-Request-ID" in response.headers
+
+
+def test_the_default_frame_policy_denies_embedding():
+    from app.core.config import Settings
+
+    # A fresh Settings() ignores any local overrides in the environment.
+    assert Settings(_env_file=None).frame_options == "DENY"
 
 
 def test_unknown_route_returns_json_404(client: TestClient):

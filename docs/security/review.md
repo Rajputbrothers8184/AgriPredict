@@ -185,6 +185,18 @@ honest state.
 * `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
   `Referrer-Policy: no-referrer`, `Cache-Control: no-store` on every response.
 * CORS is an explicit allowlist (`allow_credentials=False`), not `*`.
+* The framing policy is configurable (`FRAME_OPTIONS` + `FRAME_ANCESTORS`) only
+  so a browser-based development preview can embed the API. The default is
+  `DENY`, a matching `frame-ancestors` CSP is emitted whenever it is relaxed,
+  and `validate_runtime()` **refuses to boot in production** with anything other
+  than `DENY`. Three tests cover the default, the production refusal, and the
+  accepted production configuration.
+* Origin patterns use `CORS_ORIGIN_REGEX`, never a wildcard in `CORS_ORIGINS`:
+  Starlette compares `allow_origins` as literal strings, so `https://*.e2b.app`
+  in that list fails the preflight silently rather than opening anything — a
+  failure mode that looks like a network error. Tests assert the exact-origin
+  path succeeds, the regex path succeeds, an unknown origin is refused, and no
+  bare `*` ever appears in `cors_origin_list`.
 
 ### Secrets
 
