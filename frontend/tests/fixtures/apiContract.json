@@ -1,0 +1,271 @@
+{
+  "CommodityRead": [
+    "category",
+    "id",
+    "name_en",
+    "name_ur",
+    "price_unit",
+    "slug"
+  ],
+  "MarketRead": [
+    "district",
+    "id",
+    "is_active",
+    "latitude",
+    "longitude",
+    "name",
+    "province",
+    "slug"
+  ],
+  "PricePoint": [
+    "avg_price_pkr",
+    "max_price_pkr",
+    "min_price_pkr",
+    "price_date",
+    "source"
+  ],
+  "PriceHistory": [
+    "commodity",
+    "count",
+    "market",
+    "points",
+    "unit"
+  ],
+  "MarketComparisonRow": [
+    "avg_30d_pkr",
+    "change_pct_7d",
+    "latest_date",
+    "latest_price_pkr",
+    "market",
+    "observations"
+  ],
+  "MarketComparison": [
+    "best_market_slug",
+    "commodity",
+    "rows",
+    "unit"
+  ],
+  "ForecastRead": [
+    "commodity",
+    "disclaimer",
+    "horizon_days",
+    "id",
+    "is_fallback",
+    "issued_on",
+    "mae",
+    "market",
+    "metrics",
+    "model_name",
+    "points",
+    "rmse"
+  ],
+  "ForecastPointRead": [
+    "lower_bound_pkr",
+    "predicted_price_pkr",
+    "target_date",
+    "upper_bound_pkr"
+  ],
+  "FarmRead": [
+    "created_at",
+    "district",
+    "id",
+    "latitude",
+    "longitude",
+    "name",
+    "tehsil",
+    "total_area_acres"
+  ],
+  "CropCycleRead": [
+    "actual_harvest_date",
+    "actual_yield_kg",
+    "area_acres",
+    "commodity",
+    "created_at",
+    "expected_harvest_date",
+    "expected_yield_kg",
+    "farm_id",
+    "id",
+    "notes",
+    "season",
+    "sowing_date",
+    "status"
+  ],
+  "CropCycleDetail": [
+    "actual_harvest_date",
+    "actual_yield_kg",
+    "area_acres",
+    "commodity",
+    "created_at",
+    "expected_harvest_date",
+    "expected_yield_kg",
+    "farm_id",
+    "finance",
+    "id",
+    "notes",
+    "season",
+    "sowing_date",
+    "status"
+  ],
+  "FinanceSummary": [
+    "break_even_price_pkr",
+    "cost_pkr",
+    "margin_pct",
+    "profit_pkr",
+    "revenue_per_acre_pkr",
+    "revenue_pkr",
+    "total_yield_kg",
+    "yield_per_acre_kg"
+  ],
+  "ExpenseRead": [
+    "amount_pkr",
+    "category",
+    "created_at",
+    "crop_cycle_id",
+    "description",
+    "expense_date",
+    "id"
+  ],
+  "SaleRead": [
+    "buyer_name",
+    "commodity_id",
+    "created_at",
+    "crop_cycle_id",
+    "id",
+    "market_id",
+    "quantity_kg",
+    "sale_date",
+    "total_amount_pkr",
+    "unit_price_pkr"
+  ],
+  "FinanceOverview": [
+    "active_cycles",
+    "expense_breakdown",
+    "lifetime_cost_pkr",
+    "lifetime_profit_pkr",
+    "lifetime_revenue_pkr",
+    "margin_pct",
+    "seasons"
+  ],
+  "SeasonSummary": [
+    "cost_pkr",
+    "cycles",
+    "margin_pct",
+    "profit_pkr",
+    "revenue_pkr",
+    "season",
+    "top_expense_category",
+    "total_area_acres",
+    "year"
+  ],
+  "ExpenseBreakdownRow": [
+    "category",
+    "share_pct",
+    "total_pkr"
+  ],
+  "WeatherBundle": [
+    "current",
+    "forecast",
+    "is_live",
+    "provider"
+  ],
+  "WeatherCurrent": [
+    "condition",
+    "farm_id",
+    "humidity_pct",
+    "is_live",
+    "note",
+    "observed_at",
+    "precipitation_mm",
+    "provider",
+    "temperature_c",
+    "wind_kph"
+  ],
+  "WeatherForecastDay": [
+    "condition",
+    "day",
+    "precipitation_mm",
+    "temp_max_c",
+    "temp_min_c"
+  ],
+  "BuyerRead": [
+    "address",
+    "category",
+    "distance_km",
+    "district",
+    "fetched_at",
+    "id",
+    "latitude",
+    "longitude",
+    "name",
+    "phone",
+    "place_id",
+    "rating",
+    "user_ratings_total"
+  ],
+  "BuyerSearchResponse": [
+    "count",
+    "note",
+    "radius_m",
+    "results",
+    "source"
+  ],
+  "ReportRead": [
+    "created_at",
+    "download_url",
+    "expires_at",
+    "file_format",
+    "filename",
+    "id",
+    "report_type",
+    "size_bytes"
+  ],
+  "ExpenseCreate": [
+    "amount_pkr",
+    "category",
+    "description",
+    "expense_date"
+  ],
+  "SaleCreate": [
+    "buyer_name",
+    "market_id",
+    "quantity_kg",
+    "sale_date",
+    "unit_price_pkr"
+  ],
+  "CropCycleCreate": [
+    "area_acres",
+    "commodity_id",
+    "expected_harvest_date",
+    "expected_yield_kg",
+    "farm_id",
+    "notes",
+    "season",
+    "sowing_date",
+    "status"
+  ],
+  "CropCycleUpdate": [
+    "actual_harvest_date",
+    "actual_yield_kg",
+    "area_acres",
+    "expected_harvest_date",
+    "expected_yield_kg",
+    "notes",
+    "season",
+    "sowing_date",
+    "status"
+  ],
+  "FarmCreate": [
+    "district",
+    "latitude",
+    "longitude",
+    "name",
+    "tehsil",
+    "total_area_acres"
+  ],
+  "ReportCreate": [
+    "crop_cycle_id",
+    "file_format",
+    "report_type",
+    "season"
+  ]
+}

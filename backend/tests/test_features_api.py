@@ -467,3 +467,103 @@ def test_security_headers_are_present(client: TestClient):
 def test_unknown_route_returns_json_404(client: TestClient):
     response = client.get("/api/v1/does-not-exist")
     assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Signed download links (needed by the mobile app, which hands the URL to
+# Android's download manager — that cannot send an Authorization header).
+# ---------------------------------------------------------------------------
+def _create_report(client: TestClient, auth_headers: dict) -> dict:
+    response = client.post(
+        "/api/v1/reports",
+        headers=auth_headers,
+        json={"report_type": "financial_summary", "file_format": "pdf"},
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_download_url_carries_a_signed_token(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    body = _create_report(client, auth_headers)
+    assert "?token=" in body["download_url"]
+
+
+def test_signed_link_downloads_without_auth_header(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    body = _create_report(client, auth_headers)
+    # No headers at all, exactly like a browser hitting the link.
+    response = client.get(body["download_url"])
+    assert response.status_code == 200
+    assert response.content.startswith(b"%PDF")
+
+
+def test_download_without_token_or_header_is_rejected(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    body = _create_report(client, auth_headers)
+    report_id = body["id"]
+    response = client.get(f"/api/v1/reports/{report_id}/download")
+    assert response.status_code == 401
+
+
+def test_signed_link_is_not_valid_for_another_report(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    first = _create_report(client, auth_headers)
+    second = _create_report(client, auth_headers)
+    token = first["download_url"].split("token=")[1]
+    # A genuine token, but pointed at a different report id.
+    response = client.get(f"/api/v1/reports/{second['id']}/download?token={token}")
+    assert response.status_code == 401
+
+
+def test_signed_link_from_another_user_is_rejected(
+    client: TestClient, auth_headers: dict, other_user_headers: dict, temp_report_dir
+):
+    created = _create_report(client, auth_headers)
+    # The link names the owner in its subject claim, so someone else's session
+    # cannot reach the file even by holding the URL.
+    response = client.get(created["download_url"])
+    assert response.status_code == 200
+    direct = client.get(
+        f"/api/v1/reports/{created['id']}/download", headers=other_user_headers
+    )
+    assert direct.status_code == 404
+
+
+def test_access_token_cannot_be_used_as_a_download_token(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    body = _create_report(client, auth_headers)
+    access = auth_headers["Authorization"].split(" ")[1]
+    response = client.get(f"/api/v1/reports/{body['id']}/download?token={access}")
+    assert response.status_code == 401
+
+
+def test_tampered_download_token_is_rejected(
+    client: TestClient, auth_headers: dict, temp_report_dir
+):
+    body = _create_report(client, auth_headers)
+    token = body["download_url"].split("token=")[1]
+    tampered = token[:-3] + ("aaa" if not token.endswith("aaa") else "bbb")
+    response = client.get(f"/api/v1/reports/{body['id']}/download?token={tampered}")
+    assert response.status_code == 401
+
+
+def test_expired_report_download_is_rejected(
+    client: TestClient, session: Session, auth_headers: dict, temp_report_dir
+):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models import Report
+
+    body = _create_report(client, auth_headers)
+    record = session.get(Report, body["id"])
+    record.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+    session.commit()
+
+    response = client.get(body["download_url"])
+    assert response.status_code == 404

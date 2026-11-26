@@ -43,7 +43,7 @@ COMMON_PASSWORDS = {
 }
 DIGITS_SUFFIX = re.compile(r"\d+$")
 
-TokenType = Literal["access", "refresh"]
+TokenType = Literal["access", "refresh", "report_download"]
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +138,32 @@ def decode_token(token: str, expected_type: TokenType) -> dict[str, Any]:
             f"Expected a {expected_type} token.", code="invalid_token_type"
         )
     return payload
+
+
+def create_report_download_token(user_id: int, report_id: int, ttl_minutes: int) -> str:
+    """Mint a short-lived, single-purpose token for one report download.
+
+    Why this exists: the download endpoint is authenticated with a bearer
+    header, but the mobile app hands the URL to the system browser/download
+    manager, which cannot send custom headers. Embedding the file URL in a
+    signed query parameter lets the browser fetch it without ever exposing the
+    long-lived access token.
+
+    The token is deliberately narrow: it names one report, expires on its own,
+    and is rejected by every other endpoint because ``decode_token`` checks the
+    ``type`` claim against the expected value.
+    """
+    return _encode(
+        str(user_id),
+        "report_download",
+        timedelta(minutes=ttl_minutes),
+        report=int(report_id),
+    )
+
+
+def decode_report_download_token(token: str) -> dict[str, Any]:
+    """Validate a report-download token and return its claims."""
+    return decode_token(token, expected_type="report_download")
 
 
 def constant_time_equals(a: str, b: str) -> bool:

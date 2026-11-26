@@ -4,7 +4,7 @@ Live status board. Update this file **after every completed milestone**, with
 honest states — `done`, `in progress`, `blocked`, `not started`. A phase is only
 `done` when its verification step has actually been run.
 
-Last updated: 2026-11-25
+Last updated: 2026-11-26
 
 ---
 
@@ -12,14 +12,25 @@ Last updated: 2026-11-25
 
 | # | Phase | Status | Verified how |
 | --- | --- | --- | --- |
-| 1 | Project initialization (structure, governance docs, git) | **in progress** | files reviewed, committed, pushed |
-| 2 | Database first (ERD, schema, migrations, seed, tests) | not started | — |
-| 3 | Backend development (FastAPI, auth, APIs, tests) | not started | — |
-| 4 | Machine learning (data, preprocessing, 3 models, evaluation) | not started | — |
-| 5 | Frontend (React Native screens, i18n, theming, exports) | not started | — |
-| 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | not started | — |
-| 7 | Final testing (unit, API, DB, ML, integration, security) | not started | — |
+| 1 | Project initialization (structure, governance docs, git) | **done** | `21d820d`, tree reviewed, pushed |
+| 2 | Database first (ERD, schema, migrations, seed, tests) | **done** | `b2a483b`; 45 database tests pass |
+| 3 | Backend development (FastAPI, auth, APIs, tests) | **done** | `8298483`; 125 API tests pass |
+| 4 | Machine learning (data, preprocessing, 3 models, evaluation) | **done** | `28a8a68`; 85 ML tests pass; live service drove real forecasts |
+| 5 | Frontend (React Native screens, i18n, theming, exports) | **done with limitations** | 160 Jest tests, Metro release bundle, 11 live API tests. **No APK** — no Android SDK here |
+| 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | in progress | frontend↔backend and backend↔ML proven live; external APIs (weather/Places/Chronos) unavailable |
+| 7 | Final testing (unit, API, DB, ML, integration, security) | in progress | 415 automated tests total; security review still to do |
 | 8 | Release (docs, artifacts, tag `v1.0.0`) | not started | — |
+
+### Test totals
+
+| Layer | Tests | Command |
+| --- | --- | --- |
+| Database | 45 | `cd database && pytest tests -q` |
+| Backend API | 125 | `cd backend && pytest -q` |
+| ML service | 85 | `cd ml && pytest tests -q` |
+| Frontend | 160 | `cd frontend && npx jest` |
+| Frontend live integration (opt-in) | 11 | `LIVE_API=1 npx jest tests/live.integration.test.js` |
+| **Total** | **415 automated** + 11 live | |
 
 ## Environment / capability matrix
 
@@ -29,29 +40,29 @@ Measured in the development sandbox on 2026-11-25:
 | --- | --- | --- |
 | GitHub (gh CLI, ADMIN on repo) | ✅ | commits + pushes verifiable |
 | Python 3.11 + PyPI | ✅ | backend + ML importable and testable |
-| Node 22 + npm registry | ✅ | frontend JS/testable |
-| JDK / Android SDK / emulator | ❌ | **no APK build, no device test** |
+| Node 22 + npm registry | ✅ | 160 frontend tests; Metro release bundle compiles |
+| JDK / Android SDK / emulator | ❌ | **no APK, no device/emulator run**; native project comes from the official RN template and is unbuilt |
 | OpenWeatherMap / Open-Meteo | ❌ (blocked) | weather integration code + tests only, mocks |
 | Google Places API | ❌ (blocked) | buyers code + tests only, mocks |
-| Hugging Face (Chronos weights) | ❌ (blocked) | Chronos adapter untestable; fallbacks tested |
+| Hugging Face (Chronos weights) | ❌ (blocked) | adapter tested via a stub pipeline; real-weight path unverified; no Chronos accuracy is reported |
 | AMIS Punjab / PBS datasets | ❌ (blocked) | real accuracy impossible; synthetic fixture used |
 
 ## Modules
 
 | Module | Owner role | Status | Notes |
 | --- | --- | --- | --- |
-| Repository skeleton + governance | Backend (lead) | in progress | this commit set |
-| Database schema & migrations | Member 4 | not started | |
-| Backend auth | Member 2 | not started | |
-| Backend crops / expenses / sales / finance | Member 2 | not started | |
-| Backend markets / weather / buyers / forecasts / reports | Member 2 | not started | |
-| ML data pipeline | Member 3 | not started | |
-| ML models (SeasonalNaive, XGBoost, Chronos) | Member 3 | not started | |
-| ML inference service | Member 3 | not started | |
-| Frontend shell, navigation, theming, i18n | Member 1 | not started | |
-| Frontend feature screens | Member 1 | not started | |
-| Integration tests | All | not started | |
-| Android release build | Member 1 | blocked | no SDK in sandbox; build locally |
+| Repository skeleton + governance | Backend (lead) | done | |
+| Database schema & migrations | Member 4 | done | 16 tables, ERD, seed, integrity tests |
+| Backend auth | Member 2 | done | JWT access/refresh, rotation, token versioning |
+| Backend crops / expenses / sales / finance | Member 2 | done | server-derived totals and finance block |
+| Backend markets / weather / buyers / forecasts / reports | Member 2 | done | reports now also serve signed download links |
+| ML data pipeline | Member 3 | done | strict validation incl. series-median unit checks |
+| ML models (SeasonalNaive, XGBoost, Chronos) | Member 3 | done with limitation | Chronos adapter written and stub-tested; real weights never loaded |
+| ML inference service | Member 3 | done | FastAPI on :8001, 503 on unavailable model |
+| Frontend shell, navigation, theming, i18n | Member 1 | done | 5 tabs + shared stack, light/dark, en/ur with RTL |
+| Frontend feature screens | Member 1 | done | 19 screens incl. dashboard, crops, market, forecast, finance, weather, buyers, reports, settings |
+| Integration tests | All | in progress | frontend↔backend live suite (11) done; cross-service scenario tests remaining |
+| Android release build | Member 1 | **blocked** | no SDK here; Gradle project is committed and must be built locally |
 
 ## Branches
 
@@ -78,10 +89,27 @@ Measured in the development sandbox on 2026-11-25:
 3. **Real crop-price dataset** — unavailable from the sandbox. Pipeline is
    written for the documented AMIS/PBS format; a synthetic fixture drives tests.
    Metrics must not be presented as real-market accuracy.
-4. **Android build** — cannot be produced here. Instructions are complete; the
-   build must be executed on a machine with Android Studio.
+4. **Android build** — cannot be produced here. The native project is the
+   standard RN 0.76 template with AgriPredict's manifest, label and ProGuard
+   rules; it must be built on a machine with Android Studio. Everything that
+   could be verified without an SDK was: 160 tests and a release Hermes bundle.
+5. **Report downloads needed a backend change.** The download endpoint required
+   an `Authorization` header, which a browser or Android download manager cannot
+   send. Added short-lived signed `?token=` links (single-report scope, capped at
+   the report's own expiry); bearer auth still works for API clients. Covered by
+   8 new backend tests including tampering, wrong-report and expiry cases.
+6. **Frontend/backend contract drift was found and fixed before release.**
+   The screens were first written against assumed field names (`amount`,
+   `price_per_maund`, `predictions`) instead of the real schemas (`amount_pkr`,
+   `unit_price_pkr`, `points`). Because the app renders "—" for a missing field,
+   nothing failed visibly. A generated contract test
+   (`frontend/tests/apiContract.test.js`, 31 assertions against the FastAPI
+   OpenAPI schema) now fails if a field the app reads disappears.
+7. **New architecture disabled** in `frontend/android/gradle.properties`. Reason
+   and re-enable path are documented in `frontend/README.md`.
 
 ## Next approved task
 
-Phase 2 — database schema, ERD, migrations, seed data and integrity tests
-(Member 4), then Phase 3 backend on top of it.
+Phase 6 — integration. Specifically: a single scripted end-to-end scenario
+(register → farm → cycle → expense → sale → forecast → PDF) that runs against
+the real stack, plus the remaining external-API paths documented as untested.
