@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# AgriPredict backend — runtime dependencies
+# Python 3.11 is the target version (3.10+ works).
+#
+# Install:
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# Pinned for reproducible installs; bump deliberately, in a dedicated commit.
+# ---------------------------------------------------------------------------
+
+# Web framework
+fastapi==0.165.0
+uvicorn[standard]==0.38.0
+python-multipart==0.0.34
+
+# Data validation & settings
+pydantic==2.14.4
+pydantic-settings==2.14.2
+email-validator==2.2.0
+
+# Persistence
+SQLAlchemy==2.0.44
+alembic==1.14.0
+# psycopg[binary]==3.2.3   # uncomment to use PostgreSQL instead of SQLite
+
+# Auth
+PyJWT==2.15.1
+bcrypt==4.2.1
+
+# HTTP client used for the ML, weather and Places integrations
+httpx==0.28.1
+
+# Report generation
+reportlab==4.2.5
+openpyxl==3.1.5

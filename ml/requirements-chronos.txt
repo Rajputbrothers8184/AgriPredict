@@ -1,0 +1,25 @@
+# ---------------------------------------------------------------------------
+# AgriPredict ML service — optional foundation-model extras (Amazon Chronos)
+#
+#   pip install -r requirements-chronos.txt
+#
+# READ THIS BEFORE INSTALLING
+#   * PyTorch CPU wheels: ~200 MB download, ~1 GB installed.
+#   * chronos-forecasting pulls transformers + tokenizers (~300 MB more).
+#   * The model weights (amazon/chronos-t5-small) are ~500 MB and are downloaded
+#     from Hugging Face on first use. They are NOT in this repository.
+#   * Total disk cost: roughly 2 GB. CPU inference: ~1-3 s per 30-day forecast
+#     per series on a modern laptop; no GPU is required.
+#
+# Install CPU-only PyTorch explicitly so pip does not pull the CUDA build:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-chronos.txt
+# ---------------------------------------------------------------------------
+
+torch==2.5.1
+chronos-forecasting==1.5.2
+transformers==4.46.3
+accelerate==1.2.1
+
+# Everything from the core set is required too.
+-r requirements.txt

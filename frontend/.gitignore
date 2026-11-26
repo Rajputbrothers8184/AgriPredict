@@ -1,0 +1,21 @@
+
+# --- Android ---------------------------------------------------------------
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/local.properties
+frontend/android/.cxx/
+frontend/android/app/release/
+*.keystore
+# ...except the standard Android debug keystore, which Gradle requires to build
+# a debug APK. It contains a well-known public key, not a secret.
+!android/app/debug.keystore
+!frontend/android/app/debug.keystore
+!*.keystore.example
+
+# --- JavaScript ------------------------------------------------------------
+frontend/node_modules/
+frontend/coverage/
+frontend/.env
+*.jsbundle
+frontend/android/app/src/main/assets/index.android.bundle
