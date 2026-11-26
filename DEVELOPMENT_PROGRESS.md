@@ -18,7 +18,7 @@ Last updated: 2026-11-26
 | 4 | Machine learning (data, preprocessing, 3 models, evaluation) | **done** | `28a8a68`; 85 ML tests pass; live service drove real forecasts |
 | 5 | Frontend (React Native screens, i18n, theming, exports) | **done with limitations** | 160 Jest tests, Metro release bundle, 11 live API tests. **No APK** — no Android SDK here |
 | 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | **done with limitations** | `scripts/e2e_scenario.py`: 71/71 checks over real HTTP incl. backend→ML forecast and PDF/XLSX download; external APIs (weather/Places/Chronos) unavailable and reported honestly |
-| 7 | Final testing (unit, API, DB, ML, integration, security) | in progress | 415 automated tests total; security review still to do |
+| 7 | Final testing (unit, API, DB, ML, integration, security) | **done with limitations** | 36 backend + 13 frontend security tests; 48 dependency advisories cleared; 2 findings fixed, 3 accepted and documented; coverage 87/94/84/70%; load smoke 196 req/s with no lost updates (`docs/security/review.md`) |
 | 8 | Release (docs, artifacts, tag `v1.0.0`) | not started | — |
 
 ### Test totals
@@ -26,12 +26,12 @@ Last updated: 2026-11-26
 | Layer | Tests | Command |
 | --- | --- | --- |
 | Database | 45 | `cd database && pytest tests -q` |
-| Backend API | 125 | `cd backend && pytest -q` |
 | ML service | 85 | `cd ml && pytest tests -q` |
-| Frontend | 160 | `cd frontend && npx jest` |
+| Backend (incl. 36 security) | **161** | `cd backend && pytest -q` |
+| Frontend (incl. 13 security) | **173** | `cd frontend && npx jest` |
 | Frontend live integration (opt-in) | 11 | `LIVE_API=1 npx jest tests/live.integration.test.js` |
 | **End-to-end acceptance** | **71 checks** | `python scripts/e2e_scenario.py` (needs a running stack) |
-| **Total** | **415 automated** + 11 live + 71 e2e | |
+| **Total** | **464 automated** + 11 live + 71 e2e + load smoke | |
 
 ## Environment / capability matrix
 
@@ -122,7 +122,8 @@ Measured in the development sandbox on 2026-11-25:
 
 ## Next approved task
 
-Phase 7 — final testing. Remaining work: a security pass (auth/RBAC review,
-input-injection checks, dependency audit, secrets scan), a backend load smoke
-test, and a coverage report per layer. Phase 8 then needs the docs set
-(user guide, installation guide, architecture overview) and a tagged release.
+Phase 8 — documentation and release. Needs a user guide, an installation guide,
+an architecture overview, a deployment runbook, and a tagged release. The
+security backlog that should land before any public deployment is listed at the
+end of `docs/security/review.md` (Redis rate limiting, encrypted token storage,
+a decision on logout revocation, certificate pinning, CI dependency scanning).

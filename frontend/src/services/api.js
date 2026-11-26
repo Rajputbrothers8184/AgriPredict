@@ -8,6 +8,7 @@
  */
 
 import {API_ORIGIN} from '../config';
+import {safeExternalUrl} from '../utils/format';
 import api from './apiClient';
 
 // --- Auth -----------------------------------------------------------------
@@ -161,5 +162,7 @@ export function absoluteDownloadUrl(report) {
   if (!url) {
     return null;
   }
-  return url.startsWith('http') ? url : `${API_ORIGIN}${url}`;
+  // The link is opened by another app, so its scheme is validated rather than
+  // trusted: a response claiming `javascript:...` must not be handed to the OS.
+  return safeExternalUrl(url.startsWith('http') ? url : `${API_ORIGIN}${url}`);
 }

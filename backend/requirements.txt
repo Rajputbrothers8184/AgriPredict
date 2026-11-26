@@ -10,22 +10,22 @@
 # ---------------------------------------------------------------------------
 
 # Web framework
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-python-multipart==0.0.20
+fastapi==0.165.0
+uvicorn[standard]==0.38.0
+python-multipart==0.0.34
 
 # Data validation & settings
-pydantic==2.10.4
-pydantic-settings==2.7.0
+pydantic==2.14.4
+pydantic-settings==2.14.2
 email-validator==2.2.0
 
 # Persistence
-SQLAlchemy==2.0.36
+SQLAlchemy==2.0.44
 alembic==1.14.0
 # psycopg[binary]==3.2.3   # uncomment to use PostgreSQL instead of SQLite
 
 # Auth
-PyJWT==2.10.1
+PyJWT==2.15.1
 bcrypt==4.2.1
 
 # HTTP client used for the ML, weather and Places integrations

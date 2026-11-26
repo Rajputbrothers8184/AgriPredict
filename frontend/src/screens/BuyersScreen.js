@@ -17,7 +17,7 @@ import {useAsync} from '../hooks/useAsync';
 import {buyerApi} from '../services/api';
 import {BUYER_CATEGORIES, labelKeyFor} from '../constants/options';
 import {mapApiError} from '../utils/errors';
-import {toNumber} from '../utils/format';
+import {telUri, toNumber} from '../utils/format';
 
 /**
  * Nearby buyers.
@@ -130,7 +130,12 @@ export default function BuyersScreen() {
                   title={`${t('buyers.call')} ${buyer.phone}`}
                   variant="secondary"
                   style={styles.call}
-                  onPress={() => Linking.openURL(`tel:${buyer.phone}`)}
+                  onPress={() => {
+                    const uri = telUri(buyer.phone);
+                    if (uri) {
+                      Linking.openURL(uri);
+                    }
+                  }}
                 />
               ) : null}
             </Card>

@@ -179,3 +179,58 @@ export function isPositiveNumber(value) {
   const number = toNumber(value);
   return number !== null && number > 0;
 }
+
+// ---------------------------------------------------------------------------
+// Values that leave the app
+// ---------------------------------------------------------------------------
+// Anything passed to Linking.openURL is handed to another application on the
+// device. That makes it an attack surface: a compromised or simply buggy server
+// response could otherwise steer the user into `javascript:`, `data:` or a
+// `file:` path. Validate the scheme here, once, instead of at each call site.
+
+const EXTERNAL_SCHEMES = new Set(['https:', 'http:', 'tel:', 'mailto:']);
+
+/**
+ * True only for a URL whose scheme the app is willing to hand to the OS.
+ *
+ * `http:` is allowed because the dev server and local testing use it; the
+ * release build talks to https only (see config.js), and a production
+ * deployment should not rely on this check for transport security.
+ */
+function isAllowedExternalUrl(value) {
+  if (typeof value !== 'string' || !value) {
+    return false;
+  }
+  const trimmed = value.trim();
+  const match = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed);
+  if (!match) {
+    return false;
+  }
+  return EXTERNAL_SCHEMES.has(`${match[1].toLowerCase()}:`);
+}
+
+/** Return the URL when it is safe to open, otherwise null. */
+export function safeExternalUrl(value) {
+  if (!isAllowedExternalUrl(value)) {
+    return null;
+  }
+  return value.trim();
+}
+
+/**
+ * Build a `tel:` URI from a phone number supplied by the API.
+ *
+ * Digits, spaces, `+`, `-` and parentheses are kept; everything else is
+ * discarded, so a value like `0300; rm -rf` cannot inject another scheme or a
+ * dialler parameter.
+ */
+export function telUri(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const cleaned = String(value).replace(/[^0-9+()\- ]/g, '').trim();
+  if (cleaned.replace(/[^0-9]/g, '').length < 5) {
+    return null;
+  }
+  return `tel:${cleaned}`;
+}
