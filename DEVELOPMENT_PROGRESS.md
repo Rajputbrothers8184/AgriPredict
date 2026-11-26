@@ -19,7 +19,7 @@ Last updated: 2026-11-26
 | 5 | Frontend (React Native screens, i18n, theming, exports) | **done with limitations** | 160 Jest tests, Metro release bundle, 11 live API tests. **No APK** — no Android SDK here |
 | 6 | Integration (frontend ↔ backend ↔ ML, external APIs) | **done with limitations** | `scripts/e2e_scenario.py`: 71/71 checks over real HTTP incl. backend→ML forecast and PDF/XLSX download; external APIs (weather/Places/Chronos) unavailable and reported honestly |
 | 7 | Final testing (unit, API, DB, ML, integration, security) | **done with limitations** | 36 backend + 13 frontend security tests; 48 dependency advisories cleared; 2 findings fixed, 3 accepted and documented; coverage 87/94/84/70%; load smoke 196 req/s with no lost updates (`docs/security/review.md`) |
-| 8 | Release (docs, artifacts, tag `v1.0.0`) | not started | — |
+| 8 | Release (docs, artifacts, tag `v1.0.0`) | **done with limitations** | Docs set (architecture, installation, user guide, security, ML, contract, testing); `CHANGELOG.md`; CI workflow; versions unified at 1.0.0. **No APK and no git tag** — no Android SDK here, and tagging is the owner's call |
 
 ### Test totals
 
@@ -122,8 +122,15 @@ Measured in the development sandbox on 2026-11-25:
 
 ## Next approved task
 
-Phase 8 — documentation and release. Needs a user guide, an installation guide,
-an architecture overview, a deployment runbook, and a tagged release. The
-security backlog that should land before any public deployment is listed at the
-end of `docs/security/review.md` (Redis rate limiting, encrypted token storage,
-a decision on logout revocation, certificate pinning, CI dependency scanning).
+All eight phases are complete. What remains is not a phase but a short list of
+things that need a capability this environment does not have, or a decision only
+the project owner can make:
+
+1. **Build and run the APK** on a real device (needs the Android SDK and a
+   phone). Everything up to the release bundle is verified; Gradle is not.
+2. **Load real price data** (AMIS Punjab / PBS) under a licence that permits
+   redistribution. Until then every forecast is a demonstration of the method.
+3. **Decide on logout revocation** — `docs/security/review.md`, finding 4.
+4. **Move rate limiting to Redis** before any multi-worker deployment.
+5. **Tag `v1.0.0` and attach release assets** once an APK exists. Tagging is
+   deliberately left to the owner; nothing here is pushed as a release.

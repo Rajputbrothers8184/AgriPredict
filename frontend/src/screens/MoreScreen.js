@@ -1,16 +1,16 @@
 import React from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {Alert, ScrollView, StyleSheet, View} from 'react-native';
 
 import {AppText, Button, Card, Screen} from '../components/ui';
 import {useAuth} from '../context/AuthContext';
 import {useTheme} from '../context/ThemeContext';
 import {useTranslation} from '../context/LocalizationContext';
-import {PRICE_UNIT} from '../config';
+import {APP_VERSION, PRICE_UNIT} from '../config';
 
 export default function MoreScreen({navigation}) {
   const {theme} = useTheme();
   const {t} = useTranslation();
-  const {user, logout} = useAuth();
+  const {user, logout, logoutEverywhere} = useAuth();
 
   const items = [
     {label: t('weather.title'), route: 'Weather'},
@@ -44,7 +44,7 @@ export default function MoreScreen({navigation}) {
 
         <Card>
           <AppText variant="caption" color={theme.colors.textMuted}>
-            {t('settings.version')} 0.5.0 · {PRICE_UNIT}
+            {t('settings.version')} {APP_VERSION} · {PRICE_UNIT}
           </AppText>
         </Card>
 
@@ -53,6 +53,24 @@ export default function MoreScreen({navigation}) {
           title={t('auth.logout')}
           variant="danger"
           onPress={logout}
+          style={styles.logout}
+        />
+
+        <Button
+          testID="more-logout-all"
+          title={t('auth.logoutAll')}
+          variant="ghost"
+          // Destructive and not undoable, so it asks first.
+          onPress={() =>
+            Alert.alert(t('auth.logoutAll'), t('auth.logoutAllConfirm'), [
+              {text: t('common.cancel'), style: 'cancel'},
+              {
+                text: t('auth.logoutAll'),
+                style: 'destructive',
+                onPress: logoutEverywhere,
+              },
+            ])
+          }
           style={styles.logout}
         />
       </ScrollView>

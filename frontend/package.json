@@ -1,6 +1,6 @@
 {
   "name": "agripredict",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "private": true,
   "description": "AgriPredict \u2014 crop price forecasting and farm ERP for Android",
   "license": "MIT",

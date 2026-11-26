@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, View} from 'react-native';
 
 import {AppText, Button, Card, Input, Screen} from '../components/ui';
+import {APP_VERSION} from '../config';
 import {useAuth} from '../context/AuthContext';
 import {useTheme} from '../context/ThemeContext';
 import {useTranslation} from '../context/LocalizationContext';
@@ -148,7 +149,7 @@ export default function SettingsScreen() {
             {t('settings.aboutBody')}
           </AppText>
           <AppText variant="tiny" color={theme.colors.textMuted}>
-            {t('settings.version')} 0.5.0
+            {t('settings.version')} {APP_VERSION}
           </AppText>
         </Card>
       </ScrollView>

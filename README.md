@@ -246,8 +246,10 @@ alembic upgrade head          # create/refresh the schema
 uvicorn app.main:app --reload
 ```
 
-Interactive API docs: <http://localhost:8000/docs>. Contract reference:
-[`docs/api/`](docs/api/).
+Interactive OpenAPI docs: <http://localhost:8000/docs>. The frontend's view of
+the contract is frozen in `frontend/tests/fixtures/apiContract.json` and checked
+by `scripts/regen_api_contract.py` (see
+[`docs/frontend/api-contract.md`](docs/frontend/api-contract.md)).
 
 ## 11. Database setup
 
@@ -267,7 +269,7 @@ Schema, ER diagram and seed data: [`database/`](database/).
 cd ml
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt           # CPU-only extras by default
-python -m pipeline.build_dataset          # ingest + preprocess
+python -m training.build_dataset --source datasets/raw/synthetic.csv
 python -m training.train_all              # fit/compare models, write metrics
 uvicorn inference.service:app --port 8001
 ```
@@ -299,15 +301,30 @@ Health checks: `GET /health` on both services.
 
 ## 15. Testing
 
+Four suites, all runnable offline:
+
 ```bash
-cd backend && pytest -q                 # unit + API tests
-cd ml       && pytest -q                # preprocessing + forecast-shape tests
-cd frontend && npm test                 # jest component/unit tests
-pytest tests/                           # cross-module integration tests
+cd database && pytest tests -q          # 45   schema, parity, constraints
+cd backend  && pytest -q                # 161  unit, API and 36 security tests
+cd ml       && pytest tests -q          # 85   preprocessing, models, service
+cd frontend && npx jest                 # 179  components, services, i18n
 ```
 
-CI runs the same commands (see `.github/workflows/`). Model training is **never**
-run in CI.
+Two further layers need a running stack:
+
+```bash
+python scripts/e2e_scenario.py          # 71   end-to-end acceptance over HTTP
+python scripts/load_smoke.py            # latency + concurrency consistency
+```
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the four suites, the
+linter, both dependency audits, the API-contract check and a Metro bundle build
+on every push. It does **not** build an APK (no Android SDK in CI), and model
+training is never run in CI — see [Testing](#15-testing).
+
+Coverage: backend 87%, database 94%, ML source 84%, frontend 70% of lines.
+Details, including what is deliberately uncovered:
+[`docs/security/review.md`](docs/security/review.md).
 
 ## 16. Building and deploying
 
@@ -319,7 +336,11 @@ cd frontend/android
 ```
 
 Requires a signing keystore (`frontend/android/keystore.properties`, git-ignored).
-Full steps: [`docs/installation/android-build.md`](docs/installation/).
+**No APK has been built in this project's environment** — there is no Android SDK
+or emulator here — so treat the Gradle step as unverified. What *is* verified is
+that the JavaScript bundle compiles for release (1,569,037 bytes). Full steps,
+including the emulator/LAN address table:
+[`docs/installation/`](docs/installation/).
 
 **Services** — the backend and ML service are plain ASGI apps; either run
 `uvicorn` behind a reverse proxy or build the provided images. Hosting the ML
@@ -336,8 +357,9 @@ Four members, generic labels only (no personal data is stored in this repo).
 | Member 3 — ML | datasets, preprocessing, Chronos/XGBoost/baselines, evaluation | `ml/` | `feature/ml-model` |
 | Member 4 — Database | schema, ERD, migrations, seed, integrity tests | `database/` | `feature/database` |
 
-Assignments are **tentative** until the team confirms them. Own contribution
-record: [`docs/team-contributions.md`](docs/team-contributions.md).
+Assignments are **tentative** until the team confirms them. No personal data is
+stored in this repository; the module-by-module record of what exists and what is
+verified is [`DEVELOPMENT_PROGRESS.md`](DEVELOPMENT_PROGRESS.md).
 
 ## 18. Contributing
 

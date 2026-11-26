@@ -48,6 +48,9 @@ export default {
     login: 'Sign in',
     register: 'Create account',
     logout: 'Sign out',
+    logoutAll: 'Sign out on all devices',
+    logoutAllConfirm:
+      'Every device signed in to this account will be signed out immediately. Do this if you lost a phone or think someone else has your password.',
     noAccount: "Don't have an account? Register",
     haveAccount: 'Already have an account? Sign in',
     emailPlaceholder: 'you@example.com',

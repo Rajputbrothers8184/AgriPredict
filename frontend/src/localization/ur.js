@@ -46,6 +46,9 @@ export default {
     login: 'لاگ ان',
     register: 'اکاؤنٹ بنائیں',
     logout: 'لاگ آؤٹ',
+    logoutAll: 'تمام آلات سے لاگ آؤٹ',
+    logoutAllConfirm:
+      'اس اکاؤنٹ میں لاگ ان تمام آلات فوراً لاگ آؤٹ ہو جائیں گے۔ اگر فون گم ہو گیا ہو یا کسی کو آپ کا پاس ورڈ معلوم ہونے کا شک ہو تو یہ کریں۔',
     noAccount: 'اکاؤنٹ نہیں ہے؟ رجسٹر کریں',
     haveAccount: 'پہلے سے اکاؤنٹ ہے؟ لاگ ان کریں',
     emailPlaceholder: 'you@example.com',

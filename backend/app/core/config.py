@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, field_validator
+
+from app import __version__
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repository root = backend/app/core/config.py -> up four levels.
@@ -42,7 +44,7 @@ class Settings(BaseSettings):
     debug: bool = True
     log_level: str = "INFO"
     api_v1_prefix: str = "/api/v1"
-    version: str = "0.3.0"
+    version: str = __version__
 
     # --- Security ---------------------------------------------------------
     secret_key: str = "change-me-to-a-long-random-string"

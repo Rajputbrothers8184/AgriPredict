@@ -22,6 +22,7 @@ import {
   clearSession,
   getAccessToken,
   getCurrentUser,
+  getRefreshToken,
   persistSession,
   refreshSession,
   restoreSession,
@@ -125,7 +126,7 @@ export function AuthProvider({children}) {
   );
 
   const logout = useCallback(async () => {
-    const refreshToken = await import('../services/session').then(m => m.getRefreshToken());
+    const refreshToken = getRefreshToken();
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);
@@ -133,6 +134,24 @@ export function AuthProvider({children}) {
         // Server-side revocation is best effort; the local session is cleared
         // regardless, which is what the user asked for.
       }
+    }
+    await handleSessionLost();
+  }, [handleSessionLost]);
+
+  /**
+   * Sign out on every device.
+   *
+   * Plain `logout` revokes only this device's refresh token, so an access token
+   * already issued elsewhere keeps working until it expires. This endpoint bumps
+   * `token_version`, which invalidates every access token immediately — the
+   * action to take when a phone is lost or a password has leaked.
+   */
+  const logoutEverywhere = useCallback(async () => {
+    try {
+      await authApi.logoutAll();
+    } catch {
+      // Even if the server call fails, clear the local session: leaving the
+      // user signed in locally after they asked to sign out is worse.
     }
     await handleSessionLost();
   }, [handleSessionLost]);
@@ -167,12 +186,23 @@ export function AuthProvider({children}) {
       login,
       register,
       logout,
+      logoutEverywhere,
       updateProfile,
       changePassword,
       refreshUser,
       currentUser: () => getCurrentUser(),
     }),
-    [user, status, login, register, logout, updateProfile, changePassword, refreshUser],
+    [
+      user,
+      status,
+      login,
+      register,
+      logout,
+      logoutEverywhere,
+      updateProfile,
+      changePassword,
+      refreshUser,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,0 +1,174 @@
+name: CI
+
+# What this workflow does and does not do.
+#
+# It runs the four test suites, the linter, both dependency audits and the
+# schema/contract checks. It does NOT build an APK: no Android SDK or emulator is
+# available in the project's development environment, so an APK step here would
+# be untested configuration. APKs are built locally and attached to a release.
+#
+# Model training is never run in CI — it takes minutes and its inputs are not
+# redistributable. The ML suite tests the code, not the fitted weights.
+
+on:
+  push:
+    branches: [main, develop, "arena/**"]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Python 3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-timeout pip-audit
+
+      - name: Unit, API and security tests
+        working-directory: backend
+        env:
+          ENVIRONMENT: testing
+          DATABASE_URL: sqlite:///./ci.db
+          SECRET_KEY: ci-secret-key-not-used-anywhere-else-000
+          ML_SERVICE_ENABLED: "false"
+        run: pytest -q --timeout=120 --cov=app --cov-report=term-missing
+
+      - name: Dependency audit
+        working-directory: backend
+        # Fails the build on a known advisory rather than discovering it at the
+        # next manual review.
+        run: pip-audit -r requirements.txt
+
+  database:
+    name: Database (schema + constraints)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest
+      - name: Schema, parity and constraint tests
+        working-directory: database
+        run: pytest tests -q
+
+  ml:
+    name: ML service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ml/requirements.txt
+      - name: Install (CPU only)
+        working-directory: ml
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Preprocessing, model and service tests
+        working-directory: ml
+        run: pytest tests -q
+
+  frontend:
+    name: Frontend (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        # --max-warnings lets the two known inline-style warnings through but
+        # keeps the step honest about errors.
+        run: npx eslint src tests index.js --max-warnings 5
+
+      - name: Test
+        working-directory: frontend
+        run: npx jest --silent --ci
+
+      - name: Production dependency audit
+        working-directory: frontend
+        # Metro and the RN CLI were moved to devDependencies, so this describes
+        # what actually ships in the app.
+        run: npm audit --omit=dev
+
+      - name: Release bundle compiles
+        working-directory: frontend
+        # The cheapest real check that the app still builds: Metro must produce a
+        # bundle. This is not an APK.
+        run: |
+          npx react-native bundle \
+            --platform android --dev false \
+            --entry-file index.js \
+            --bundle-output /tmp/ci.bundle \
+            --assets-dest /tmp/ci-assets
+          test -s /tmp/ci.bundle
+
+  contract:
+    name: API contract in sync
+    runs-on: ubuntu-latest
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          (cd frontend && npm ci)
+
+      - name: Regenerate the frontend's API fixture
+        run: python scripts/regen_api_contract.py
+
+      - name: Fail if the committed fixture was stale
+        # If a backend schema changed without the frontend fixture following,
+        # this is the step that notices.
+        run: git diff --exit-code frontend/tests/fixtures/apiContract.json
+
+      - name: Contract test
+        working-directory: frontend
+        run: npx jest tests/apiContract.test.js --silent
