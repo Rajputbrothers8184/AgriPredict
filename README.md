@@ -194,31 +194,94 @@ Each module has its own `README.md` describing that department's contract.
 
 ## 8. Quick start
 
-Requires Git, Node.js 20+, Python 3.11+. Full details in
-[`docs/installation/`](docs/installation/).
+Requires Git, Python 3.11+ and GNU Make. Node 20+ is only needed for the Android
+client. Full details in [`docs/installation/`](docs/installation/).
+
+### One command
 
 ```bash
 git clone https://github.com/Rajputbrothers8184/AgriPredict.git
 cd AgriPredict
-cp .env.example .env          # then set SECRET_KEY
+make setup      # once: creates .venv, installs backend + ML + frontend deps
+make            # every time: starts everything
+```
 
-# Backend API  → http://localhost:8000/docs
-cd backend
-python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+`make` does the whole local bring-up:
 
-# ML service   → http://localhost:8001/docs   (second terminal)
-cd ml
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn inference.service:app --reload --port 8001
+1. finds a Python interpreter that has the dependencies,
+2. creates the SQLite schema and seeds reference data (16 commodities, 16 markets),
+3. seeds 24,000 labelled demo price rows and a demo account if the database is new,
+4. starts the ML service on 8001 and the API on 8000,
+5. **health-gates both** — the API's `/health` polls the ML service, so this fails
+   loudly instead of printing a URL that will error on the first request,
+6. streams both logs with `[API]` / `[ML]` prefixes and stops both on Ctrl-C.
 
-# Android app  (third terminal)
+```
+  Ready
+    API      http://127.0.0.1:8000
+    docs     http://127.0.0.1:8000/docs
+    health   http://127.0.0.1:8000/health
+    ML       http://127.0.0.1:8001/docs
+
+  Demo account (seeded):  demo@agripredict.pk / Sunflower2026
+```
+
+Useful flags and variants:
+
+```bash
+make api                          # API only; forecasts fall back to the baseline
+python scripts/dev.py --reload    # auto-restart on code changes
+make seed                         # re-run the demo price seeder explicitly
+make test                # all four offline suites (~1 min)
+make test-e2e            # 71 acceptance checks against the running stack
+make help                # every target
+```
+
+`scripts/dev.py` is a plain Python wrapper around the same documented commands —
+it is not a second source of truth. Confirm what it will run with
+`python scripts/dev.py --help`.
+
+### Without Make
+
+`scripts/dev.py` is the whole thing — `make` only calls it:
+
+```bash
+python3 scripts/dev.py            # same bring-up, same flags
+python3 scripts/dev.py --help     # every option
+python3 scripts/dev.py --no-ml    # API only
+```
+
+### Windows
+
+`scripts/dev.py` works, but the `make` targets assume a POSIX shell. Use WSL, or
+run the two `uvicorn` commands from
+[`docs/installation/README.md`](docs/installation/README.md) in separate terminals.
+
+### Embedding the API in a browser preview
+
+The API sends `X-Frame-Options: DENY` by default, which blocks iframes. A hosted
+preview that renders the API in a frame needs:
+
+```bash
+python scripts/dev.py --frame-options SAMEORIGIN
+# or set FRAME_OPTIONS=SAMEORIGIN FRAME_ANCESTORS="https://*.example.app"
+```
+
+Relaxed framing is refused at startup when `ENVIRONMENT=production`.
+
+### Android client
+
+The API and ML service run without it; the client needs the Android SDK:
+
+```bash
 cd frontend
 npm install
+echo "API_BASE_URL=http://10.0.2.2:8000/api/v1" > .env   # 10.0.2.2 = host, from an emulator
 npm run android
 ```
+
+**No APK is built or verified in this repository** — there is no Android SDK in
+its development environment. See [`docs/installation/`](docs/installation/).
 
 ## 9. Frontend setup
 

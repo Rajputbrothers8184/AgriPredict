@@ -15,8 +15,10 @@ parts that are stubbed or blocked.
 
 ### I want to run it
 
+* **One command:** `make setup` once, then `make`. See
+  [Quick start](../README.md#8-quick-start).
 * [Installation](installation/README.md) — backend, ML service, Android client,
-  demo data, and the emulator/LAN address table.
+  demo data, and the emulator/LAN address table, step by step.
 * [End-to-end scenario](testing/e2e-scenario.md) — the 71-check acceptance
   walk-through and what each check protects against.
 

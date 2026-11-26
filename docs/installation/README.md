@@ -7,6 +7,11 @@ section says what was actually observed.
 Prerequisites: **Python 3.11** (3.10+ works), **Node 20+**, **JDK 17 + Android
 SDK 34** for the client (optional — the API and ML service run without them).
 
+> **Fastest path:** `make setup` once, then `make`. It seeds the database, starts
+> both services, health-gates them and stops both on Ctrl-C. The manual steps
+> below exist so you can understand and change what it does — they are not an
+> alternative you have to follow.
+
 ---
 
 ## 1. Get the code
